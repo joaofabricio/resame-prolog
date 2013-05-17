@@ -36,7 +36,7 @@
 %  ou sem-solucao se o jogo não tem solução.
 
 main(File) :-
-    writeln(File). % imprime o nome do arquivo
+    writeln(File), fail.
 
 %% solve(+Same, -Moves) is nondet
 %
@@ -60,14 +60,14 @@ solve(Same, [M|Moves]) :-
 %  auxiliares.
 
 group(Same, Group) :-
-    fail.
+    writeln([Same, Group]), fail.
 
 %% grupo(+Same, +P, -Group) is semidet
 %
 %  Verdadeiro se Group é um grupo de Same que contém a posição P.
 
 group(Same, P, Group) :-
-    fail.
+    writeln([Same, P, Group]), fail.
 
 %% remove_group(+Same, +Group, -NewSame) is semidet
 %
@@ -77,4 +77,4 @@ group(Same, P, Group) :-
 %    - crie um predicado auxiliar remove_column_group, que remove os elementos
 %    de uma coluna específica
 remove_group(Same, Group, NewSame) :-
-    fail.
+    writeln([Same, Group, NewSame]), fail.
