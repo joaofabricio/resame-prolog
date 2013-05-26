@@ -58,16 +58,64 @@ solve(Same, [M|Moves]) :-
 %  capaz de gerar todos os grupos de Same. Este predicado não deve gerar grupos
 %  repetidos. Este predicado e group/3 para vão utilizar os mesmos precicados
 %  auxiliares.
-
 group(Same, Group) :-
-    writeln([Same, Group]), fail.
+    group(Same, pos(0,0), Group).
+%    writeln([Same, Group]), fail.
+
+
+cor(Same, Pos, Cor) :-
+   Pos = pos(X, Y),
+   nth0(Y, Same, Column),
+   nth0(X, Column, Cor).
+
+vizinhos(P, V) :-
+   P = pos(X, Y),
+   Yn is Y+1,
+   N = pos(X, Yn),
+   Ys is Y-1,
+   S = pos(X, Ys),
+   Xl is X+1,
+   L = pos(Xl, Y),
+   Xo is X-1,
+   O = pos(Xo, Y),
+   V = [N, S, L, O].
+
+validPosition(Same, P) :-
+   P = pos(X, Y),
+   nth0(Y, Same, Column),
+   nth0(X, Column, _).
 
 %% grupo(+Same, +P, -Group) is semidet
 %
 %  Verdadeiro se Group é um grupo de Same que contém a posição P.
-
 group(Same, P, Group) :-
-    writeln([Same, P, Group]), fail.
+   vizinhos(P, Vizinhos),
+   cor(Same, P, Cor),
+   append(Group, [P], NextGroup),
+   group(Same, NextGroup, Cor, Vizinhos).
+
+%não tem mais candidatos
+group(_, _, _, []) :-
+   !.
+
+%F já foi verificado e é membro de Group
+group(Same, Group, Cor, [F|R]) :-
+   member(F, Group), !,
+   group(Same, Group, Cor, R).
+   
+%group(+Same, ?Group, +Cor, ?Candidatos)   
+%F será adicionado à Group
+group(Same, Group, Cor, [F|R]) :-
+   validPosition(Same, F),
+   cor(Same, F, Cor),!,
+   vizinhos(F, Vizinhos),
+   append(R, Vizinhos, ProximosCandidatos),
+   append(Group, [F], NextGroup),
+   group(Same, NextGroup, Cor, ProximosCandidatos).
+
+%F não é da mesma cor de Group ou é inválido
+group(Same, Group, Cor, [_|R]) :-
+   group(Same, Group, Cor, R).
 
 %% remove_group(+Same, +Group, -NewSame) is semidet
 %
@@ -78,3 +126,5 @@ group(Same, P, Group) :-
 %    de uma coluna específica
 remove_group(Same, Group, NewSame) :-
     writeln([Same, Group, NewSame]), fail.
+%remove_group([F|R], Group, NewSame) :-
+%remove_column_group(SameActual, Group, Pos) :-
