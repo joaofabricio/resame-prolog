@@ -68,17 +68,22 @@ cor(Same, Pos, Cor) :-
    nth0(Y, Same, Column),
    nth0(X, Column, Cor).
 
-vizinhos(P, V) :-
+vizinho(P, V) :-
    P = pos(X, Y),
    Yn is Y+1,
-   N = pos(X, Yn),
+   V = pos(X, Yn).
+vizinho(P, V) :-
+   P = pos(X, Y),
    Ys is Y-1,
-   S = pos(X, Ys),
+   V = pos(X, Ys).
+vizinho(P, V) :-
+   P = pos(X, Y),
    Xl is X+1,
-   L = pos(Xl, Y),
+   V = pos(Xl, Y).
+vizinho(P, V) :-
+   P = pos(X, Y),
    Xo is X-1,
-   O = pos(Xo, Y),
-   V = [N, S, L, O].
+   V = pos(Xo, Y).
 
 validPosition(Same, P) :-
    P = pos(X, Y),
@@ -88,34 +93,19 @@ validPosition(Same, P) :-
 %% grupo(+Same, +P, -Group) is semidet
 %
 %  Verdadeiro se Group é um grupo de Same que contém a posição P.
-group(Same, P, Group) :-
-   vizinhos(P, Vizinhos),
+group(Same, P, [P|Group]) :-
    cor(Same, P, Cor),
-   append(Group, [P], NextGroup),
-   group(Same, NextGroup, Cor, Vizinhos).
-
-%não tem mais candidatos
-group(_, _, _, []) :-
-   !.
-
-%F já foi verificado e é membro de Group
-group(Same, Group, Cor, [F|R]) :-
-   member(F, Group), !,
-   group(Same, Group, Cor, R).
+   vizinho(P, V),
+   group(Same, V, Group, Cor).
    
-%group(+Same, ?Group, +Cor, ?Candidatos)   
-%F será adicionado à Group
-group(Same, Group, Cor, [F|R]) :-
-   validPosition(Same, F),
-   cor(Same, F, Cor),!,
-   vizinhos(F, Vizinhos),
-   append(R, Vizinhos, ProximosCandidatos),
-   append(Group, [F], NextGroup),
-   group(Same, NextGroup, Cor, ProximosCandidatos).
-
 %F não é da mesma cor de Group ou é inválido
-group(Same, Group, Cor, [_|R]) :-
-   group(Same, Group, Cor, R).
+group(Same, P, [P|Group], Cor) :-
+   validPosition(Same, P),
+   cor(Same, P, Cor),
+   vizinho(P, V),
+   group(Same, V, Group, Cor).
+   
+group(Same, P, Group, Cor).
 
 %% remove_group(+Same, +Group, -NewSame) is semidet
 %
@@ -126,5 +116,9 @@ group(Same, Group, Cor, [_|R]) :-
 %    de uma coluna específica
 remove_group(Same, Group, NewSame) :-
     writeln([Same, Group, NewSame]), fail.
+
+remove(X, [X|T], T).
+remove(X, [H|T], [H|T1]):- remove(X,T,T1).
 %remove_group([F|R], Group, NewSame) :-
 %remove_column_group(SameActual, Group, Pos) :-
+	
