@@ -162,6 +162,8 @@ remove_line([FL|RL], Group, X, Y, LBuilding, ListReturn, NewGroup) :-!,
 
 remove_line([], NewGroup, _, _, Return, Return, NewGroup):-!.
 
-remove_blank([F|R], [F|T]) :- !,remove_blank(R, T).
-remove_blank([[]|R], T) :- !,remove_blank(R, T).
+remove_blank([F|R], [F|T]) :- 
+   not(F = []),
+   remove_blank(R, T).
+remove_blank([[]|R], T) :- remove_blank(R, T).
 remove_blank([], []).
