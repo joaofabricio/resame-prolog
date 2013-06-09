@@ -101,14 +101,14 @@ group(_, ListaFinal, _, [], ListaFinal) :-
 
 %F já foi verificado e é membro de Group
 group(Same, Group, Cor, [F|R],ListaFinal) :-
-   member(F, Group),
+   member(F, Group),!,
    group(Same, Group, Cor, R,ListaFinal).
    
 %group(+Same, ?Group, +Cor, ?Candidatos)   
 %F será adicionado à Group
 group(Same, Group, Cor, [F|R],ListaFinal) :-
-   validPosition(Same, F),
-   cor(Same,F,Cor),
+   %validPosition(Same, F),
+   cor(Same,F,Cor),!,
    %write(F),
    vizinhos(F, Vizinhos),
    append(R, Vizinhos, ProximosCandidatos),
@@ -116,7 +116,7 @@ group(Same, Group, Cor, [F|R],ListaFinal) :-
    group(Same, NextGroup, Cor, ProximosCandidatos,ListaFinal).
 
 %F não é da mesma cor de Group ou é inválido
-group(Same, Group, Cor, [_|R], ListaFinal) :-
+group(Same, Group, Cor, [_|R], ListaFinal) :-!,
    group(Same, Group, Cor, R, ListaFinal).
 
 
@@ -133,7 +133,8 @@ group(Same, Group, Cor, [_|R], ListaFinal) :-
 
 remove_group(Same, Group, NewSame) :-
    sort(Group, GSorted),
-   remove_column(Same, GSorted, 0, [], NewSame).
+   remove_column(Same, GSorted, 0, [], NewSameWithBlanks),
+   remove_blank(NewSameWithBlanks, NewSame).
 
 %remove column
 remove_column([FS|RS], [pos(X, Y)|R], X, Building, NewSame) :- !,
@@ -160,3 +161,7 @@ remove_line([FL|RL], Group, X, Y, LBuilding, ListReturn, NewGroup) :-!,
    remove_line(RL, Group, X, NextY, NextL, LR, NewGroup).
 
 remove_line([], NewGroup, _, _, Return, Return, NewGroup):-!.
+
+remove_blank([F|R], [F|T]) :- !,remove_blank(R, T).
+remove_blank([[]|R], T) :- !,remove_blank(R, T).
+remove_blank([], []).
