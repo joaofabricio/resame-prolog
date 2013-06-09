@@ -94,10 +94,10 @@ group(Same, P, Group) :-
    group(Same, [P], Cor, Vizinhos,Group).
 
 %não tem mais candidatos - condicao base recursao
-group(_, ListaFinal, _, [], ListaFinal) :- !
+group(_, ListaFinal, _, [], ListaFinal) :-
 	%sort(X,V),
 	%write(V),   
-	.
+	!.
 
 %F já foi verificado e é membro de Group
 group(Same, Group, Cor, [F|R],ListaFinal) :-
@@ -119,6 +119,7 @@ group(Same, Group, Cor, [F|R],ListaFinal) :-
 group(Same, Group, Cor, [_|R], ListaFinal) :-
    group(Same, Group, Cor, R, ListaFinal).
 
+
 %% remove_group(+Same, +Group, -NewSame) is semidet
 %
 %  Verdadeiro se NewSame é obtido de Same remov\endo os elemento especificados
@@ -132,11 +133,11 @@ group(Same, Group, Cor, [_|R], ListaFinal) :-
 
 remove_group(Same, Group, NewSame) :-
    sort(Group, GSorted),
-   writeln(GSorted),
    remove_column(Same, GSorted, 0, [], NewSame).
 
-remove_column([FS|RS], [pos(X,_)|R], X, Building, NewSame) :- !,
-   remove_line(FS, [pos(X,_)|R], X, 0, Building, NewFS, NewGroup),
+%remove column
+remove_column([FS|RS], [pos(X, Y)|R], X, Building, NewSame) :- !,
+   remove_line(FS, [pos(X, Y)|R], X, 0, [], NewFS, NewGroup),
    append(Building, [NewFS], NextB),
    NextX is X+1,
    remove_column(RS, NewGroup, NextX, NextB, NewSame).
@@ -148,15 +149,14 @@ remove_column([FS|RS], Group, X, Building, NewSame) :- !,
    
 remove_column([], [], _, NewSame, NewSame):-!.
 
-remove_line([FL|RL], [pos(X,Y)|R], X, Y, L, LR, NewGroup) :-!,
-   writeln('FL=pos(x,y)'),
-   writeln(FL),
+%remove line
+remove_line([_|RL], [pos(X,Y)|R], X, Y, LBuilding, ListReturn, NewGroup) :-!,
    NextY is Y+1,
-   remove_line(RL, R, X, NextY, L, LR, NewGroup).
+   remove_line(RL, R, X, NextY, LBuilding, ListReturn, NewGroup).
 
-remove_line([FL|RL], Group, X, Y, L, LR, NewGroup) :-!,
+remove_line([FL|RL], Group, X, Y, LBuilding, ListReturn, NewGroup) :-!,
    NextY is Y+1,
-   append(L, [FL], NextL),
+   append(LBuilding, [FL], NextL),
    remove_line(RL, Group, X, NextY, NextL, LR, NewGroup).
 
-remove_line([], NewGroup, _, _, L, L, NewGroup):-!.
+remove_line([], NewGroup, _, _, Return, Return, NewGroup):-!.
