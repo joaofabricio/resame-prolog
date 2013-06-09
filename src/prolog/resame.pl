@@ -29,7 +29,6 @@
 
 % Você pode utilizar os predicados definidos no arquivo resame_utils.pl
 :- consult(resame_utils).
-
 %% main(+File) is det
 %
 %  Carrega um jogo same do arquivo File e imprime uma resolução na saída padrão
@@ -62,63 +61,102 @@ group(Same, Group) :-
     group(Same, pos(0,0), Group).
 %    writeln([Same, Group]), fail.
 
-
 cor(Same, Pos, Cor) :-
-   Pos = pos(X, Y),
+   pos(X, Y) = Pos,
    nth0(Y, Same, Column),
    nth0(X, Column, Cor).
 
-vizinho(P, V) :-
+vizinhos(P, V) :-
    P = pos(X, Y),
    Yn is Y+1,
-   V = pos(X, Yn).
-vizinho(P, V) :-
-   P = pos(X, Y),
+   N = pos(X, Yn),
    Ys is Y-1,
-   V = pos(X, Ys).
-vizinho(P, V) :-
-   P = pos(X, Y),
+   S = pos(X, Ys),
    Xl is X+1,
-   V = pos(Xl, Y).
-vizinho(P, V) :-
-   P = pos(X, Y),
+   L = pos(Xl, Y),
    Xo is X-1,
-   V = pos(Xo, Y).
+   O = pos(Xo, Y),
+   V = [N, S, L, O].
 
 validPosition(Same, P) :-
-   P = pos(X, Y),
+   pos(X, Y) = P,
    nth0(Y, Same, Column),
    nth0(X, Column, _).
-
+   
 %% grupo(+Same, +P, -Group) is semidet
 %
 %  Verdadeiro se Group é um grupo de Same que contém a posição P.
-group(Same, P, [P|Group]) :-
+group(Same, P, Group) :-
+   vizinhos(P, Vizinhos),
    cor(Same, P, Cor),
-   vizinho(P, V),
-   group(Same, V, Group, Cor).
+   %append(Group, [P], NextGroup),
+   %write(NextGroup),
+   group(Same, [P], Cor, Vizinhos,Group).
+
+%não tem mais candidatos - condicao base recursao
+group(_, ListaFinal, _, [], ListaFinal) :- !
+	%sort(X,V),
+	%write(V),   
+	.
+
+%F já foi verificado e é membro de Group
+group(Same, Group, Cor, [F|R],ListaFinal) :-
+   member(F, Group),
+   group(Same, Group, Cor, R,ListaFinal).
    
+%group(+Same, ?Group, +Cor, ?Candidatos)   
+%F será adicionado à Group
+group(Same, Group, Cor, [F|R],ListaFinal) :-
+   validPosition(Same, F),
+   cor(Same,F,Cor),
+   %write(F),
+   vizinhos(F, Vizinhos),
+   append(R, Vizinhos, ProximosCandidatos),
+   append(Group, [F], NextGroup),
+   group(Same, NextGroup, Cor, ProximosCandidatos,ListaFinal).
+
 %F não é da mesma cor de Group ou é inválido
-group(Same, P, [P|Group], Cor) :-
-   validPosition(Same, P),
-   cor(Same, P, Cor),
-   vizinho(P, V),
-   group(Same, V, Group, Cor).
-   
-group(Same, P, Group, Cor).
+group(Same, Group, Cor, [_|R], ListaFinal) :-
+   group(Same, Group, Cor, R, ListaFinal).
 
 %% remove_group(+Same, +Group, -NewSame) is semidet
 %
-%  Verdadeiro se NewSame é obtido de Same removendo os elemento especificados
+%  Verdadeiro se NewSame é obtido de Same remov\endo os elemento especificados
 %  em Group. A remoção é feita de acordo com as regras do jogo same.
 %  Dica:
 %    - crie um predicado auxiliar remove_column_group, que remove os elementos
 %    de uma coluna específica
-remove_group(Same, Group, NewSame) :-
-    writeln([Same, Group, NewSame]), fail.
 
-remove(X, [X|T], T).
-remove(X, [H|T], [H|T1]):- remove(X,T,T1).
-%remove_group([F|R], Group, NewSame) :-
-%remove_column_group(SameActual, Group, Pos) :-
-	
+%remove_group(Same, Group, NewSame) :-
+%    writeln([Same, Group, NewSame]), fail.
+
+remove_group(Same, Group, NewSame) :-
+   sort(Group, GSorted),
+   writeln(GSorted),
+   remove_column(Same, GSorted, 0, [], NewSame).
+
+remove_column([FS|RS], [pos(X,_)|R], X, Building, NewSame) :- !,
+   remove_line(FS, [pos(X,_)|R], X, 0, Building, NewFS, NewGroup),
+   append(Building, [NewFS], NextB),
+   NextX is X+1,
+   remove_column(RS, NewGroup, NextX, NextB, NewSame).
+
+remove_column([FS|RS], Group, X, Building, NewSame) :- !,
+   NextX is X+1,
+   append(Building, [FS], NextB),
+   remove_column(RS, Group, NextX, NextB, NewSame).
+   
+remove_column([], [], _, NewSame, NewSame):-!.
+
+remove_line([FL|RL], [pos(X,Y)|R], X, Y, L, LR, NewGroup) :-!,
+   writeln('FL=pos(x,y)'),
+   writeln(FL),
+   NextY is Y+1,
+   remove_line(RL, R, X, NextY, L, LR, NewGroup).
+
+remove_line([FL|RL], Group, X, Y, L, LR, NewGroup) :-!,
+   NextY is Y+1,
+   append(L, [FL], NextL),
+   remove_line(RL, Group, X, NextY, NextL, LR, NewGroup).
+
+remove_line([], NewGroup, _, _, L, L, NewGroup):-!.
