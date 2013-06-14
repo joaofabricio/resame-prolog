@@ -158,12 +158,11 @@ remove_line([_|RL], [pos(X,Y)|R], X, Y, LBuilding, ListReturn, NewGroup) :-!,
 remove_line([FL|RL], Group, X, Y, LBuilding, ListReturn, NewGroup) :-!,
    NextY is Y+1,
    append(LBuilding, [FL], NextL),
-   remove_line(RL, Group, X, NextY, NextL, LR, NewGroup).
+   remove_line(RL, Group, X, NextY, NextL, ListReturn, NewGroup).
 
 remove_line([], NewGroup, _, _, Return, Return, NewGroup):-!.
 
-remove_blank([F|R], [F|T]) :- 
-   not(F = []),
-   remove_blank(R, T).
-remove_blank([[]|R], T) :- remove_blank(R, T).
 remove_blank([], []).
+remove_blank([[]|R], T) :- !,remove_blank(R, T).
+remove_blank([F|R], [F|T]) :- 
+   remove_blank(R, T).
