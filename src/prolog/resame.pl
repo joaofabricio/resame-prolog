@@ -57,10 +57,154 @@ solve(Same, [M|Moves]) :-
 %  capaz de gerar todos os grupos de Same. Este predicado não deve gerar grupos
 %  repetidos. Este predicado e group/3 para vão utilizar os mesmos precicados
 %  auxiliares.
-group(Same, Group) :-
-    group(Same, pos(0,0), Group).
-%    writeln([Same, Group]), fail.
 
+group(Same, Group) :-
+    todosOsGrupos(Same, LGroup),
+    member(Group, LGroup).
+
+posicoes(Same, Pos) :-
+    posicoes(Same, 0, 0, LPos),
+    member(Pos, LPos).
+    
+posicoes(Same, X, Y, [pos(X,Y)|LPos]) :-
+    length(Same, TotalColunas),
+    X < TotalColunas,
+    nth0(X,Same,Coluna),
+    length(Coluna, TotalLinhas),
+    Y < TotalLinhas,!,
+    NextY is Y+1,
+    posicoes(Same, X, NextY, LPos).
+
+posicoes(Same, X, Y, LPos) :-
+    length(Same, TotalColunas),
+    X < TotalColunas,
+    nth0(X,Same,Coluna),
+    length(Coluna, TotalLinhas),
+    Y >= TotalLinhas,!,
+    NextX is X+1,
+    posicoes(Same, NextX, 0, LPos).
+
+posicoes(Same, X, Y, []).
+
+%percorre dentro das colunas - inicio
+sublista(Lista,P,ListaFinal) :-
+	length(Lista,TamanhoLista),
+	Y is 0,
+	sublista(TamanhoLista,P,Y,SubLista,ListaFinal),!.
+
+sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
+	Y < TamanhoLista,
+	E = pos(P,Y),
+	append(SubLista,[E],Nova),
+	NextY is Y + 1,
+	sublista(TamanhoLista,P,NextY,Nova,ListaFinal).
+
+sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
+	Y =:= TamanhoLista,
+	ListaFinal = SubLista,!.
+
+%percorre dentro das colunas - fim
+
+%percorre dentro do same - inicio	
+listaPosicoes(Same,ListaPosicoesSame) :-
+	length(Same,TamanhoSame),
+	P is 0,
+        listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame),!.
+
+listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
+	P < TamanhoSame,
+	nth0(P,Same,ColunaSame),
+	sublista(ColunaSame,P,ListaPosicoes),
+	append(SubLista,ListaPosicoes,Nova),
+	NextP is P + 1,
+	listaPosicoes(Same,TamanhoSame,NextP,Nova,ListaPosicoesSame).
+
+listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
+	P =:= TamanhoSame,
+	ListaPosicoesSame = SubLista,
+	length(ListaPosicoesSame,TamanhoFinal),!.
+	%write('     '),
+	%write('Tamanho final:  '),
+	%write(TamanhoFinal),!.
+
+%percorre dentro do same - final
+
+%cria todos os grupos possiveis de um determinado same - inicio
+todosOsGrupos(Same,ListaDeGruposSame) :-
+	listaPosicoes(Same,ListaPosicoesSame),
+%	write(ListaPosicoesSame),
+	head(ListaPosicoesSame,Elemento),
+%	write(' '),
+%	write(Elemento),
+	group(Same,Elemento,Group),
+	length(Grupo,TamanhoGrupo),
+	TamanhoGrupo > 1,
+	%writeln(' '),
+	%write(' Grupo:  '),
+	%write(Group),
+	%writeln(' '),
+	deletaElementos(Group,ListaPosicoesSame,NovaListaPosicoesSame),
+	append([],[Group],SubListaGrupos),
+	%write(' Nova lista de posicoes:   '),
+	%write(NovaListaPosicoesSame),
+	%writeln('  '),
+	todosOsGrupos(Same,NovaListaPosicoesSame,SubListaGrupos,ListaDeGruposSame),!.
+
+todosOsGrupos(Same,ListaPosicoesSame,SubListaGrupos,ListaDeGruposSame) :-
+	head(ListaPosicoesSame,Elemento),
+	%write('  '),
+	%write(Elemento),
+	%writeln('  '),
+ 	group(Same,Elemento,Group),
+	length(Grupo,TamanhoGrupo),
+	TamanhoGrupo > 1,
+	%write('Tamanho Normal :'),
+	%write(' '),
+	%write(TamanhoGrupo),
+	%writeln(' '),
+	append(SubListaGrupos,[Group],NovaSubListaGrupos),
+	%write(' Grupo;   '),
+	%write(Group),
+	%writeln('  '),
+ 	deletaElementos(Group,ListaPosicoesSame,NovaListaPosicoesSame),
+	%writeln('Nova Lista de posicoes  '),
+	%write(NovaListaPosicoesSame),
+	%writeln('  '),
+ 	todosOsGrupos(Same,NovaListaPosicoesSame,NovaSubListaGrupos,ListaDeGruposSame).
+
+todosOsGrupos(Same,ListaPosicoesSame,SubListaGrupos,ListaDeGruposSame) :-
+	head(ListaPosicoesSame,Elemento),
+	%write('  TESTE').
+	%write('Elemento Posicao: '),
+	%write(' '),	
+	%write(Elemento),
+	%writeln('  '),
+ 	\+group(Same,Elemento,Group),
+	%write(' Grupo nao formado '),
+	%writeln(' '),
+	delete(ListaPosicoesSame,Elemento,NovaListaPosicoesSame),
+	%write(NovaListaPosicoesSame),
+	%writeln('  '),
+	todosOsGrupos(Same,NovaListaPosicoesSame,SubListaGrupos,ListaDeGruposSame).
+ 
+todosOsGrupos(Same,[],SubListaGrupos,ListaDeGruposSame) :- 
+	%write('   FIM LISTA POSICOES  '),!.
+	ListaDeGruposSame = SubListaGrupos,!.
+	%write(ListaDeGruposSame),!.
+%cria todos os grupos possiveis de um determinado same - fim
+
+% deleta elementos da lista de posicoes
+% deleta as posicoes que pertencem a um grupo
+deletaElementos(Group,ListaPosicoesSame,NovaListaPosicoesSame) :-
+	head(Group,Elemento),
+	delete(ListaPosicoesSame,Elemento,NovaLista), % NovaLista e a lista de posicoes sem o elemento
+	tail(Group,CaudaGrupo),
+	deletaElementos(CaudaGrupo,NovaLista,NovaListaPosicoesSame),!.
+
+deletaElementos([],ListaPosicoesSame, NovaListaPosicoesSame) :-
+	NovaListaPosicoesSame = ListaPosicoesSame,!.
+
+		
 cor(Same, Pos, Cor) :-
    pos(X, Y) = Pos,
    nth0(Y, Same, Column),
@@ -77,11 +221,6 @@ vizinhos(P, V) :-
    Xo is X-1,
    O = pos(Xo, Y),
    V = [N, S, L, O].
-
-validPosition(Same, P) :-
-   pos(X, Y) = P,
-   nth0(Y, Same, Column),
-   nth0(X, Column, _).
    
 %% grupo(+Same, +P, -Group) is semidet
 %
@@ -93,22 +232,26 @@ group(Same, P, Group) :-
    %write(NextGroup),
    group(Same, [P], Cor, Vizinhos,Group).
 
+
 %não tem mais candidatos - condicao base recursao
 group(_, ListaFinal, _, [], ListaFinal) :-
 	%sort(X,V),
-	%write(V),   
+	%write(ListaFinal). 
+	length(ListaFinal,TamGroup),
+	TamGroup > 1,  
 	!.
+
 
 %F já foi verificado e é membro de Group
 group(Same, Group, Cor, [F|R],ListaFinal) :-
-   member(F, Group),!,
+   member(F, Group), !, 	
    group(Same, Group, Cor, R,ListaFinal).
    
 %group(+Same, ?Group, +Cor, ?Candidatos)   
 %F será adicionado à Group
 group(Same, Group, Cor, [F|R],ListaFinal) :-
    %validPosition(Same, F),
-   cor(Same,F,Cor),!,
+   cor(Same,F,Cor), !,
    %write(F),
    vizinhos(F, Vizinhos),
    append(R, Vizinhos, ProximosCandidatos),
@@ -135,6 +278,7 @@ remove_group(Same, Group, NewSame) :-
    sort(Group, GSorted),
    remove_column(Same, GSorted, 0, [], NewSameWithBlanks),
    remove_blank(NewSameWithBlanks, NewSame).
+
 
 %remove column
 remove_column([FS|RS], [pos(X, Y)|R], X, Building, NewSame) :- !,
