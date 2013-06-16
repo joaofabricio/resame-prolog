@@ -35,7 +35,56 @@
 %  ou sem-solucao se o jogo não tem solução.
 
 main(File) :-
-    writeln(File), fail.
+    read_matrix_file(File, Same),
+    solve(Same, Moves),
+    length(Same, TotalColunas),
+    length(Same, TotalLinhas),
+    writeMoves(Same, Moves, TotalLinhas, TotalColunas).
+
+main(File) :-
+    writeln('sem-solucao').
+
+writeMoves(Same, [M|Moves], TotalLinhas, TotalColunas) :-
+    writeln(M),
+    group(Same, M, Group),
+    remove_group(Same, Group, NewSame),
+    writeSame(NewSame, TotalLinhas, TotalColunas),
+    writeMoves(NewSame, Moves, TotalLinhas, TotalColunas).
+
+writeMoves([], [], TotalLinhas, TotalColunas).
+
+writeSame([C|Colunas], TotalLinhas, TotalColunas) :-
+    writeLinha(C, TotalLinhas),
+    TotalC is TotalColunas-1,
+    writeSame(Colunas, TotalLinhas, TotalC).
+
+writeSame([], TotalLinhas, TotalColunas) :-
+    TotalColunas > 0,
+    writeLinha([], TotalLinhas),
+    TotalC is TotalColunas-1,
+    writeSame([], TotalLinhas, TotalC).
+
+writeSame([], _, 0).
+
+writeLinha([], 0) :-
+    writeln('').
+
+writeLinha([L|Linhas], TotalLinhas) :-
+    write(L),
+    write(' '),
+    TotalL is TotalLinhas-1,
+    writeLinha(Linhas, TotalL).
+
+%writeLinha([L|[]], TotalLinhas) :-
+%    write(L),
+%    TotalL is TotalLinhas-1,
+%    writeLinha(Linhas, TotalL).
+
+writeLinha([], TotalLinhas) :-
+    TotalLinhas > 0,
+    write('0 '),
+    TotalL is TotalLinhas-1,
+    writeLinha([], TotalL).
 
 %% solve(+Same, -Moves) is nondet
 %
