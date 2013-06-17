@@ -41,50 +41,48 @@ main(File) :-
     length(Same, TotalLinhas),
     writeMoves(Same, Moves, TotalLinhas, TotalColunas).
 
-main(File) :-
+main(_) :-
     writeln('sem-solucao').
 
-writeMoves(Same, [M|Moves], TotalLinhas, TotalColunas) :-
-    writeln(M),
-    group(Same, M, Group),
+writeMoves(Same, [pos(X,Y)|Moves], TotalLinhas, TotalColunas) :-!,
+    write(X),
+    write(' '),
+    writeln(Y),
+    writeln(''),
+    group(Same, pos(X,Y), Group),
     remove_group(Same, Group, NewSame),
-    writeSame(NewSame, TotalLinhas, TotalColunas),
+    completeWithZeros(NewSame, TotalLinhas, TotalColunas, NewMatrix),
+    write_matrix(NewMatrix),
+    writeln(''),
     writeMoves(NewSame, Moves, TotalLinhas, TotalColunas).
 
-writeMoves([], [], TotalLinhas, TotalColunas).
+writeMoves([], [], _, _).
 
-writeSame([C|Colunas], TotalLinhas, TotalColunas) :-
-    writeLinha(C, TotalLinhas),
-    TotalC is TotalColunas-1,
-    writeSame(Colunas, TotalLinhas, TotalC).
+completeWithZeros([], _, 0, []).
 
-writeSame([], TotalLinhas, TotalColunas) :-
+completeWithZeros([C|Colunas], TotalLinhas, TotalColunas, [NewLine|NewMatrix]) :-
     TotalColunas > 0,
-    writeLinha([], TotalLinhas),
+    writeLinha(C, TotalLinhas, NewLine),
     TotalC is TotalColunas-1,
-    writeSame([], TotalLinhas, TotalC).
+    completeWithZeros(Colunas, TotalLinhas, TotalC, NewMatrix).
 
-writeSame([], _, 0).
+completeWithZeros([], TotalLinhas, TotalColunas, [NewLine|NewMatrix]) :-
+    TotalColunas > 0,
+    writeLinha([], TotalLinhas, NewLine),
+    TotalC is TotalColunas-1,
+    completeWithZeros([], TotalLinhas, TotalC, NewMatrix).
 
-writeLinha([], 0) :-
-    writeln('').
+writeLinha([], 0, []).
 
-writeLinha([L|Linhas], TotalLinhas) :-
-    write(L),
-    write(' '),
-    TotalL is TotalLinhas-1,
-    writeLinha(Linhas, TotalL).
-
-%writeLinha([L|[]], TotalLinhas) :-
-%    write(L),
-%    TotalL is TotalLinhas-1,
-%    writeLinha(Linhas, TotalL).
-
-writeLinha([], TotalLinhas) :-
+writeLinha([L|Linhas], TotalLinhas, [L|NewLine]) :-
     TotalLinhas > 0,
-    write('0 '),
     TotalL is TotalLinhas-1,
-    writeLinha([], TotalL).
+    writeLinha(Linhas, TotalL, NewLine).
+
+writeLinha([], TotalLinhas, [0|NewLine]) :-
+    TotalLinhas > 0,
+    TotalL is TotalLinhas-1,
+    writeLinha([], TotalL, NewLine).
 
 %% solve(+Same, -Moves) is nondet
 %
@@ -133,13 +131,13 @@ posicoes(Same, X, Y, LPos) :-
     NextX is X+1,
     posicoes(Same, NextX, 0, LPos).
 
-posicoes(Same, X, Y, []).
+posicoes(_, _, _, []).
 
 %percorre dentro das colunas - inicio
 sublista(Lista,P,ListaFinal) :-
 	length(Lista,TamanhoLista),
 	Y is 0,
-	sublista(TamanhoLista,P,Y,SubLista,ListaFinal),!.
+	sublista(TamanhoLista,P,Y,_,ListaFinal),!.
 
 sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
 	Y < TamanhoLista,
@@ -148,7 +146,7 @@ sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
 	NextY is Y + 1,
 	sublista(TamanhoLista,P,NextY,Nova,ListaFinal).
 
-sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
+sublista(TamanhoLista,_,Y,SubLista,ListaFinal) :-
 	Y =:= TamanhoLista,
 	ListaFinal = SubLista,!.
 
@@ -158,7 +156,7 @@ sublista(TamanhoLista,P,Y,SubLista,ListaFinal) :-
 listaPosicoes(Same,ListaPosicoesSame) :-
 	length(Same,TamanhoSame),
 	P is 0,
-        listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame),!.
+        listaPosicoes(Same,TamanhoSame,P,_,ListaPosicoesSame),!.
 
 listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
 	P < TamanhoSame,
@@ -168,10 +166,10 @@ listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
 	NextP is P + 1,
 	listaPosicoes(Same,TamanhoSame,NextP,Nova,ListaPosicoesSame).
 
-listaPosicoes(Same,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
+listaPosicoes(_,TamanhoSame,P,SubLista,ListaPosicoesSame) :-
 	P =:= TamanhoSame,
 	ListaPosicoesSame = SubLista,
-	length(ListaPosicoesSame,TamanhoFinal),!.
+	length(ListaPosicoesSame,_),!.
 	%write('     '),
 	%write('Tamanho final:  '),
 	%write(TamanhoFinal),!.
@@ -186,7 +184,7 @@ todosOsGrupos(Same,ListaDeGruposSame) :-
 %	write(' '),
 %	write(Elemento),
 	group(Same,Elemento,Group),
-	length(Grupo,TamanhoGrupo),
+	length(Group,TamanhoGrupo),
 	TamanhoGrupo > 1,
 	%writeln(' '),
 	%write(' Grupo:  '),
@@ -205,7 +203,7 @@ todosOsGrupos(Same,ListaPosicoesSame,SubListaGrupos,ListaDeGruposSame) :-
 	%write(Elemento),
 	%writeln('  '),
  	group(Same,Elemento,Group),
-	length(Grupo,TamanhoGrupo),
+	length(Group,TamanhoGrupo),
 	TamanhoGrupo > 1,
 	%write('Tamanho Normal :'),
 	%write(' '),
@@ -228,7 +226,7 @@ todosOsGrupos(Same,ListaPosicoesSame,SubListaGrupos,ListaDeGruposSame) :-
 	%write(' '),	
 	%write(Elemento),
 	%writeln('  '),
- 	\+group(Same,Elemento,Group),
+ 	\+group(Same,Elemento,_),
 	%write(' Grupo nao formado '),
 	%writeln(' '),
 	delete(ListaPosicoesSame,Elemento,NovaListaPosicoesSame),
@@ -236,7 +234,7 @@ todosOsGrupos(Same,ListaPosicoesSame,SubListaGrupos,ListaDeGruposSame) :-
 	%writeln('  '),
 	todosOsGrupos(Same,NovaListaPosicoesSame,SubListaGrupos,ListaDeGruposSame).
  
-todosOsGrupos(Same,[],SubListaGrupos,ListaDeGruposSame) :- 
+todosOsGrupos(_,[],SubListaGrupos,ListaDeGruposSame) :- 
 	%write('   FIM LISTA POSICOES  '),!.
 	ListaDeGruposSame = SubListaGrupos,!.
 	%write(ListaDeGruposSame),!.
@@ -327,7 +325,6 @@ remove_group(Same, Group, NewSame) :-
    sort(Group, GSorted),
    remove_column(Same, GSorted, 0, [], NewSameWithBlanks),
    remove_blank(NewSameWithBlanks, NewSame).
-
 
 %remove column
 remove_column([FS|RS], [pos(X, Y)|R], X, Building, NewSame) :- !,
