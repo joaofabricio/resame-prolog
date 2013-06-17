@@ -255,7 +255,9 @@ deletaElementos([],ListaPosicoesSame, NovaListaPosicoesSame) :-
 cor(Same, Pos, Cor) :-
    pos(X, Y) = Pos,
    nth0(Y, Same, Column),
-   nth0(X, Column, Cor).
+   nth0(X, Column, Cor),
+   Cor > 0.
+
 
 vizinhos(P, V) :-
    P = pos(X, Y),
@@ -322,9 +324,18 @@ group(Same, Group, Cor, [_|R], ListaFinal) :-!,
 %    writeln([Same, Group, NewSame]), fail.
 
 remove_group(Same, Group, NewSame) :-
-   sort(Group, GSorted),
-   remove_column(Same, GSorted, 0, [], NewSameWithBlanks),
+   removeGrupo(Same, Group, NewSameWithZeros),
+   removeZeros(NewSameWithZeros, NewSameWithBlanks),
    remove_blank(NewSameWithBlanks, NewSame).
+   %sort(Group, GSorted),
+   %remove_column(Same, GSorted, 0, [], NewSameWithBlanks),
+   %remove_blank(NewSameWithBlanks, NewSame).
+
+removeZeros([], []).
+
+removeZeros([F|R], [New|NewSame]) :-
+   delete(F, 0, New),
+   removeZeros(R, NewSame).
 
 %remove column
 remove_column([FS|RS], [pos(X, Y)|R], X, Building, NewSame) :- !,
@@ -356,3 +367,163 @@ remove_blank([], []).
 remove_blank([[]|R], T) :- !,remove_blank(R, T).
 remove_blank([F|R], [F|T]) :- 
    remove_blank(R, T).
+
+
+% remove grupos outras funcoes
+
+% Funcoes uteis
+
+remove_vazio_listas([H|C], ListaSemElementosVazio) :-
+	delete([H|C],[],ListaSemElementosVazio).
+
+% funcao utilizada
+remove_1_elemento(Elem,[Elem|Cauda],Cauda).
+remove_1_elemento(Elem,[Elem1|Cauda],[Elem1|Cauda1]) :-
+	remove_1_elemento(Elem,Cauda,Cauda1). 
+
+% verdadeiro se ListaResultante e a lista Lista com o elemento Elemento 
+% removido da posicao POSICAO 
+remove_em(Lista,Elemento,Posicao,ListaResultante) :-
+    length(Lista,TamanhoLista),
+    Posicao > TamanhoLista - 1,
+    write('falhou'),!.	
+
+remove_em(Lista,Elemento,Posicao,ListaResultante) :-
+	Posicao =:= 0,
+	remove_1_elemento(Elemento,Lista,Nova),
+	%delete(Lista,Elemento,Nova),
+	ListaResultante = Nova,!.
+    
+remove_em(Lista,Elemento,Posicao,ListaResultante) :-
+    Acumulador is 0,
+    remove_em(Lista,Elemento,Acumulador,Posicao,_, ListaResultante),!.
+
+remove_em([Cabeca|Cauda],Elemento,Acumulador,Posicao,Sublista,ListaResultante) :-
+    Acumulador < Posicao,
+    Acumulador1 is Acumulador + 1,
+    append(Sublista,[Cabeca],NovaSublista),
+    remove_em(Cauda,Elemento,Acumulador1,Posicao,NovaSublista,ListaResultante).
+
+remove_em([Cabeca|Cauda],Elemento,Acumulador,Posicao,Sublista,ListaResultante) :-
+    Acumulador =:= Posicao,
+    Elemento = Cabeca,    
+%    delete([Cabeca|Cauda],Elemento,Sub),
+    append([],Cauda,Sub),
+    append(Sublista,Sub,ListaFinal),
+    ListaResultante = ListaFinal,!.
+
+% verdadeiro se ListaResultante e a lista Lista com o elemento Elemento 
+% inserido na posicao POSICAO 
+insere_em(Lista, Elemento,Posicao,ListaResultante) :-
+    length(Lista,TamanhoLista),
+    Posicao > TamanhoLista - 1,
+    append(Lista,[Elemento],NovaLista),
+    %write(NovaLista),
+    write('  '),
+    ListaResultante = NovaLista,!.
+
+insere_em(Lista, Elemento, Posicao, ListaResultante) :-
+    Acumulador is 0,
+    insere_em(Lista, Elemento,Acumulador,Posicao,_,ListaResultante),!.
+	
+insere_em([Cabeca|Cauda],Elemento,Acumulador,Posicao,Sublista,ListaResultante) :- 
+    Acumulador < Posicao, 
+    append(Sublista,[Cabeca],NovaSubLista),
+    AcumuladorNovo is Acumulador + 1,
+    insere_em(Cauda,Elemento,AcumuladorNovo,Posicao,NovaSubLista,ListaResultante).
+
+insere_em([Cabeca|Cauda], Elemento,Posicao,Acumulador, SubLista,ListaResultante) :-
+    Acumulador =:= Posicao,
+    append(Sublista,[Elemento],Sub),
+    append(SubLista,Sub,SubListaFinal),
+    append(SubListaFinal,[Cabeca|Cauda],ListaFinal),
+    ListaResultante = ListaFinal,!. 
+
+removeGrupo(Same,[pos(X,Y)|Resto],NewSame) :-
+%	head(Grupo,Elemento),
+%	pos(X,Y) = Elemento,
+	%write(X),
+	%writeln(' '),
+	%write(Y),
+	%writeln(' '),
+	nth0(Y,Same,Coluna),
+	length(Coluna,TamanhoColuna),
+	%write(TamanhoColuna),
+	%writeln(' '),
+	TamanhoColuna > 1,
+	remove_em(Same,Coluna,Y,Novo),
+	nth0(X,Coluna,Elemento),
+	remove_em(Coluna,Elemento,X, NovaColuna),
+	insere_em(NovaColuna,0,X,Nova),
+	insere_em(Novo,Nova,Y,SameAlterado),
+%	write(SameAlterado),
+%	writeln(' '),
+	removeGrupo(SameAlterado,Resto,NewSame),!.
+
+removeGrupo(SameAlterado, [pos(X,Y)|Resto], NewSame) :-
+	nth0(Y,SameAlterado,Coluna),
+	length(Coluna,TamanhoColuna),
+%	write(TamanhoColuna),
+%	writeln(' '),
+	TamanhoColuna > 1,
+	remove_em(SameAlterado,Coluna,Y,Novo),
+	nth0(X,Coluna,Elemento),
+	remove_em(Coluna,Elemento,X, NovaColuna),
+	%write(' Nova Coluna  '),
+	%write(NovaColuna),
+	%writeln(' '),
+	insere_em(Novo,NovaColuna,Y,NovoSame),
+%	write(NovoSame),
+%	writeln(' '),
+ 	removeGrupo(NovoSame,Resto,NewSame).
+
+
+removeGrupo(SameAlterado,[pos(X,Y)|Resto], NewSame) :-
+	nth0(Y,SameAlterado,Coluna),
+	length(Coluna,TamanhoColuna),
+	TamanhoColuna =:= 1,
+%	write('Chegou aqui'),
+	remove_em(SameAlterado,Coluna,Y,Novo),
+%	write('  Chegou aqui'),		
+	nth0(0,Coluna,Elemento),
+%	write('  Chegou aqui'),		
+	remove_em(Coluna,Elemento,0, NovaColuna),
+%	write('  Chegou aqui'),
+%	writeln(' '),		
+%	write(' Nova Coluna  '),
+%	write(NovaColuna),
+%	writeln(' '),
+	insere_em(SameAlterado,NovaColuna,Y,NovoSame),
+%	write('Novo Same:  '),
+%	write(NovoSame),
+%	writeln(' ').
+	%removeGrupo(NovoSame,Resto,NewSame).
+
+removeGrupo(SameTemp,[],NewSame) :-
+	NewSame = SameTemp,!.
+	
+
+elimina_zeros([H|C],ListaFinal) :-
+	Acc is 0,
+	length([H|C],TamanhoLista),
+	nth0(Acc,[H|C],SubLista),
+	delete(SubLista,0,NovaSubLista),
+	append([],NovaSubLista,ListaRetorno),
+	Ac1 is Acc + 1,
+	elimina_zeros(C,Ac1,TamanhoLista,ListaRetorno,ListaFinal).
+
+elimina_zeros([H|C],Acc,_,ListaTemp,ListaFinal) :-
+	Acc < TamLista - 1,
+	nth0(Acc,[H|C],SubLista),
+	delete(SubLista,0,NovaSubLista),
+	insere_em(ListaTemp,NovaSubLista,Acc,ListaRetorno),
+	Ac1 is Acc + 1,
+	elimina_zeros(C,Ac1,TamanhoLista,ListaRetorno,ListaFinal).
+
+elimina_zeros([H|C],Acc,TamLista,ListaTemp,ListaFinal) :- 
+	Acc =:= TamLista - 1,
+	nth0(Acc,[H|C],SubLista),
+	delete(SubLista,0,NovaSubLista),
+	insere_em(ListaTemp,NovaSubLista,Acc,ListaRetorno),
+	ListaFinal = ListaRetorno.
+	
